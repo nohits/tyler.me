@@ -1,0 +1,52 @@
+name: Daily Website Update
+
+on:
+  schedule:
+    #- cron: '*/5 * * * *'     # Testing: Every 5 min
+    #- cron: '44 5 * * *'  # 11:35 PM CST (5:35 AM UTC)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell
+        run: sudo apt-get install -y powershell
+
+      - name: Run PowerShell script 1
+        run: pwsh ./format_gameNumber.ps1
+
+      - name: Run PowerShell script 2
+        run: pwsh ./001.ps1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run Python update
+        run: python update_site.py
+
+      - name: Commit changes
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "github-actions"
+          git add .
+          git commit -m "Daily update" || echo "No changes"
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .   # root of your website
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
